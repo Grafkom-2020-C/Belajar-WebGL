@@ -5,12 +5,13 @@ function main() {
   // Ibaratnya di bawah ini adalah .c
   var vertexShaderSource = `
     void main() {
-
+      gl_PointSize = 25.0;
+      gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
     }
   `;
   var fragmentShaderSource = `
     void main() {
-
+      gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
     }
   `;
 
@@ -39,6 +40,8 @@ function main() {
   // Ibarat memulai menggunakan "cat" .exe ke dalam konteks grafika (penggambaran)
   gl.useProgram(shaderProgram);
 
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clearColor(0.0, 0.22, 0.5, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
+
+  gl.drawArrays(gl.POINTS, 0, 1);
 }
