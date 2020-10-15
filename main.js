@@ -7,12 +7,13 @@ function main() {
    * A = (-0.5, 0.5)
    * B = (0.5, 0.5)
    * C = (0.5, -0.5)
+   * D = (-0.5, -0.5)
    */
   var vertices = [
     -0.5, 0.5,      // Titik A
     0.5, 0.5,       // Titik B
     0.5, -0.5,      // Titik C
-    -0.5, 0.5       // Titik A
+    -0.5, -0.5       // Titik D
   ];
 
   var vertexBuffer = gl.createBuffer();
@@ -24,7 +25,6 @@ function main() {
   var vertexShaderSource = `
     attribute vec2 a_Position;
     void main() {
-      gl_PointSize = 25.0;
       gl_Position = vec4(a_Position, 0.0, 1.0);
     }
   `;
@@ -67,7 +67,7 @@ function main() {
   gl.clearColor(0.0, 0.22, 0.5, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  var primitive = gl.LINE_STRIP;
+  var primitive = gl.TRIANGLE_FAN;
   var offset = 0;
   var nVertex = 4;
   gl.drawArrays(primitive, offset, nVertex);
