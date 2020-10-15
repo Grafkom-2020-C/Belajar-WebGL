@@ -10,10 +10,12 @@ function main() {
    * D = (-0.5, -0.5)
    */
   var vertices = [
-    0.5, 0.5,       // Titik B
-    -0.5, 0.5,      // Titik A
-    0.5, -0.5,      // Titik C
-    -0.5, -0.5      // Titik D
+    -0.5, 0.5, 1.0, 0.0, 0.0,      // Titik A
+    0.5, 0.5, 0.0, 1.0, 0.0,       // Titik B
+    0.5, -0.5, 0.0, 0.0, 1.0,      // Titik C
+    -0.5, 0.5, 1.0, 0.0, 0.0,      // Titik A
+    0.5, -0.5, 0.0, 0.0, 1.0,      // Titik C
+    -0.5, -0.5, 0.0, 1.0, 0.0      // Titik D
   ];
 
   var vertexBuffer = gl.createBuffer();
@@ -24,13 +26,18 @@ function main() {
   // Ibaratnya di bawah ini adalah .c
   var vertexShaderSource = `
     attribute vec2 a_Position;
+    attribute vec3 a_Color;
+    varying vec3 v_Color;
     void main() {
       gl_Position = vec4(a_Position, 0.0, 1.0);
+      v_Color = a_Color;
     }
   `;
   var fragmentShaderSource = `
+    precision mediump float;
+    varying vec3 v_Color;
     void main() {
-      gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+      gl_FragColor = vec4(v_Color, 1.0);
     }
   `;
 
@@ -61,15 +68,30 @@ function main() {
 
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   var aPosition = gl.getAttribLocation(shaderProgram, "a_Position");
-  gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+  var aColor = gl.getAttribLocation(shaderProgram, "a_Color");
+  gl.vertexAttribPointer(
+    aPosition, 
+    2, 
+    gl.FLOAT, 
+    false, 
+    5 * Float32Array.BYTES_PER_ELEMENT, 
+    0);
+  gl.vertexAttribPointer(
+    aColor, 
+    3, 
+    gl.FLOAT, 
+    false, 
+    5 * Float32Array.BYTES_PER_ELEMENT, 
+    2 * Float32Array.BYTES_PER_ELEMENT);
   gl.enableVertexAttribArray(aPosition);
+  gl.enableVertexAttribArray(aColor);
 
   gl.clearColor(0.0, 0.22, 0.5, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.viewport(100, 0, canvas.height, canvas.height);
 
-  var primitive = gl.TRIANGLE_STRIP;
+  var primitive = gl.TRIANGLES;
   var offset = 0;
-  var nVertex = 4;
+  var nVertex = 6;
   gl.drawArrays(primitive, offset, nVertex);
 }
