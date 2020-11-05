@@ -30,7 +30,13 @@ function main() {
     varying vec3 v_Color;
     uniform vec2 d;
     void main() {
-      gl_Position = vec4(a_Position + d, 0.0, 1.0);
+      mat4 translasi = mat4(
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        d, 0.0, 1.0
+      );
+      gl_Position = translasi * vec4(a_Position, 0.0, 1.0);
       v_Color = a_Color;
     }
   `;
