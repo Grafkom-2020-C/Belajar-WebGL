@@ -128,9 +128,11 @@ function main() {
   var uProjection = gl.getUniformLocation(shaderProgram, 'projection');
   gl.uniformMatrix4fv(uProjection, false, projection);
   gl.uniformMatrix4fv(uView, false, view);
-  gl.uniformMatrix4fv(uModel, false, model);
 
   function render() {
+    glMatrix.mat4.rotate(model, model, glMatrix.glMatrix.toRadian(0.5), [0.0, 0.0, 1.0]);
+    glMatrix.mat4.rotate(model, model, glMatrix.glMatrix.toRadian(1), [0.0, 1.0, 0.0]);
+    gl.uniformMatrix4fv(uModel, false, model);
     gl.clearColor(0.0, 0.22, 0.5, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(primitive, offset, nVertex);
