@@ -58,19 +58,21 @@ function main() {
     attribute vec3 a_Position;
     attribute vec3 a_Color;
     varying vec3 v_Color;
-    uniform mat4 projection;
-    uniform mat4 view;
-    uniform mat4 model;
+    uniform mat4 u_Projection;
+    uniform mat4 u_View;
+    uniform mat4 u_Model;
     void main() {
-      gl_Position = projection * view * model * vec4(a_Position, 1.0);
+      gl_Position = u_Projection * u_View * u_Model * vec4(a_Position, 1.0);
       v_Color = a_Color;
     }
   `;
   var fragmentShaderSource = `
     precision mediump float;
     varying vec3 v_Color;
+    uniform vec3 u_AmbientColor;
     void main() {
-      gl_FragColor = vec4(v_Color, 1.0);
+      vec3 ambient = u_AmbientColor * v_Color;
+      gl_FragColor = vec4(ambient, 1.0);
     }
   `;
 
@@ -154,11 +156,14 @@ function main() {
     0.5,  // near
     10.0  // far
     );
-  var uModel = gl.getUniformLocation(shaderProgram, 'model');
-  var uView = gl.getUniformLocation(shaderProgram, 'view');
-  var uProjection = gl.getUniformLocation(shaderProgram, 'projection');
+  var uModel = gl.getUniformLocation(shaderProgram, 'u_Model');
+  var uView = gl.getUniformLocation(shaderProgram, 'u_View');
+  var uProjection = gl.getUniformLocation(shaderProgram, 'u_Projection');
   gl.uniformMatrix4fv(uProjection, false, projection);
   gl.uniformMatrix4fv(uView, false, view);
+
+  var uAmbientColor = gl.getUniformLocation(shaderProgram, 'u_AmbientColor');
+  gl.uniform3fv(uAmbientColor, [0.6, 0.6, 0.6]);
 
   function render() {
     glMatrix.mat4.rotate(model, model, glMatrix.glMatrix.toRadian(0.5), [0.0, 0.0, 1.0]);
