@@ -2,21 +2,51 @@ function main() {
   var canvas = document.getElementById("myCanvas");
   var gl = canvas.getContext("webgl");
 
-  // Definisi titik-titik pembentuk segitiga
-  /**
-   * A = (-0.5, 0.5)
-   * B = (0.5, 0.5)
-   * C = (0.5, -0.5)
-   * D = (-0.5, -0.5)
-   */
-  var vertices = [
-    -0.5, 0.5, 1.0, 0.0, 0.0,      // Titik A
-    0.5, 0.5, 0.0, 1.0, 0.0,       // Titik B
-    0.5, -0.5, 0.0, 0.0, 1.0,      // Titik C
-    -0.5, 0.5, 1.0, 0.0, 0.0,      // Titik A
-    0.5, -0.5, 0.0, 0.0, 1.0,      // Titik C
-    -0.5, -0.5, 0.0, 1.0, 0.0      // Titik D
+  var vertices = [];
+  // Definisi posisi titik sudut pada kubus
+  var cubePoints = [
+    [-0.5,  0.5,  0.5],   // A, 0
+    [-0.5, -0.5,  0.5],   // B, 1
+    [ 0.5, -0.5,  0.5],   // C, 2 
+    [ 0.5,  0.5,  0.5],   // D, 3
+    [-0.5,  0.5, -0.5],   // E, 4
+    [-0.5, -0.5, -0.5],   // F, 5
+    [ 0.5, -0.5, -0.5],   // G, 6
+    [ 0.5,  0.5, -0.5]    // H, 7 
   ];
+  // Definisi warna titik sudut pada kubus
+  var cubeColors = [
+    [],
+    [1.0, 0.0, 0.0],    // merah
+    [0.0, 1.0, 0.0],    // hijau
+    [0.0, 0.0, 1.0],    // biru
+    [1.0, 1.0, 1.0],    // putih
+    [1.0, 0.5, 0.0],    // oranye
+    [1.0, 1.0, 0.0],    // kuning
+    []
+  ];
+  // Fungsi untuk membuat definisi vertices pada satu sisi kubus
+  function quad(a, b, c, d) {
+    var indices = [a, b, c, c, d, a];
+    for (var i=0; i<indices.length; i++) {
+      // Mendata posisi verteks
+      var point = cubePoints[indices[i]];
+      for (var j=0; j<point.length; j++) {
+        vertices.push(point[j]);
+      }
+      // Mendata warna verteks
+      var color = cubeColors[a];
+      for (var j=0; j<color.length; j++) {
+        vertices.push(color[j]);
+      }
+    }
+  }
+  quad(1, 2, 3, 0); // DEPAN
+  quad(2, 6, 7, 3); // KANAN
+  quad(3, 7, 4, 0); // ATAS
+  quad(4, 5, 1, 0); // KIRI
+  quad(5, 4, 7, 6); // BELAKANG
+  quad(6, 2, 1, 5); // BAWAH
 
   var vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -25,14 +55,14 @@ function main() {
 
   // Ibaratnya di bawah ini adalah .c
   var vertexShaderSource = `
-    attribute vec2 a_Position;
+    attribute vec3 a_Position;
     attribute vec3 a_Color;
     varying vec3 v_Color;
     uniform mat4 projection;
     uniform mat4 view;
     uniform mat4 model;
     void main() {
-      gl_Position = projection * view * model * vec4(a_Position, 0.0, 1.0);
+      gl_Position = projection * view * model * vec4(a_Position, 1.0);
       v_Color = a_Color;
     }
   `;
@@ -74,26 +104,27 @@ function main() {
   var aColor = gl.getAttribLocation(shaderProgram, "a_Color");
   gl.vertexAttribPointer(
     aPosition, 
-    2, 
+    3, 
     gl.FLOAT, 
     false, 
-    5 * Float32Array.BYTES_PER_ELEMENT, 
+    6 * Float32Array.BYTES_PER_ELEMENT, 
     0);
   gl.vertexAttribPointer(
     aColor, 
     3, 
     gl.FLOAT, 
     false, 
-    5 * Float32Array.BYTES_PER_ELEMENT, 
-    2 * Float32Array.BYTES_PER_ELEMENT);
+    6 * Float32Array.BYTES_PER_ELEMENT, 
+    3 * Float32Array.BYTES_PER_ELEMENT);
   gl.enableVertexAttribArray(aPosition);
   gl.enableVertexAttribArray(aColor);
 
   gl.viewport(100, 0, canvas.height, canvas.height);
+  gl.enable(gl.DEPTH_TEST);
 
   var primitive = gl.TRIANGLES;
   var offset = 0;
-  var nVertex = 6;
+  var nVertex = 36;
 
   var freeze = false;
   function onMouseClick(event) {
@@ -112,7 +143,7 @@ function main() {
   var model = glMatrix.mat4.create();
   var view = glMatrix.mat4.create();
   glMatrix.mat4.lookAt(view,
-    [0.0, 0.0, 3.0], // posisi kamera (titik)
+    [0.0, 0.0, 2.0], // posisi kamera (titik)
     [0.0, 0.0, -2.0], // ke mana kamera menghadap (vektor)
     [0.0, 1.0, 0.0]  // ke mana arah atas kamera (vektor)
     );
@@ -134,7 +165,7 @@ function main() {
     glMatrix.mat4.rotate(model, model, glMatrix.glMatrix.toRadian(1), [0.0, 1.0, 0.0]);
     gl.uniformMatrix4fv(uModel, false, model);
     gl.clearColor(0.0, 0.22, 0.5, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.drawArrays(primitive, offset, nVertex);
     requestAnimationFrame(render);
   }
