@@ -52,7 +52,7 @@ function main() {
       }
       // Mendata normal verteks
       var normal = cubeNormals[a];
-      for (var j=0; j<color.length; j++) {
+      for (var j=0; j<normal.length; j++) {
         vertices.push(normal[j]);
       }
     }
@@ -88,7 +88,8 @@ function main() {
       vec3 ambient = u_AmbientColor * v_Color;
       vec3 vertexPosition = (u_Model * vec4(a_Position, 1.0)).xyz;
       vec3 lightDirection = normalize(u_LightPosition - vertexPosition);
-      float dotProductLN = max(dot(lightDirection, a_Normal), 0);
+      vec3 normalDirection = normalize(u_Normal * a_Normal);
+      float dotProductLN = max(dot(lightDirection, normalDirection), 0.0);
       vec3 diffuse = a_Color * u_LightColor * dotProductLN;    // koefisien serap material * intensitas cahaya datang * jumlah cahaya terpantulkan
       v_Color = ambient + diffuse;
     }
