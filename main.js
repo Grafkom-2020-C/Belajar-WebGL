@@ -98,7 +98,7 @@ function main() {
     precision mediump float;
     varying vec3 v_Color;
     void main() {
-      gl_FragColor = vec4(vColor, 1.0);
+      gl_FragColor = vec4(v_Color, 1.0);
     }
   `;
 
@@ -146,7 +146,7 @@ function main() {
     9 * Float32Array.BYTES_PER_ELEMENT, 
     3 * Float32Array.BYTES_PER_ELEMENT);
   gl.vertexAttribPointer(
-    aColor, 
+    aNormal, 
     3, 
     gl.FLOAT, 
     false, 
