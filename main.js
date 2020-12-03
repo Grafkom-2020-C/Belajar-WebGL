@@ -25,6 +25,17 @@ function main() {
     [1.0, 1.0, 0.0],    // kuning
     []
   ];
+  // Definisi normal masing-masing titik sudut pada kubus
+  var cubeNormals = [
+    [],
+    [0.0, 0.0, 1.0],    // depan
+    [1.0, 0.0, 0.0],    // kanan
+    [0.0, 1.0, 0.0],    // atas
+    [-1.0, 0.0, 0.0],   // kiri
+    [0.0, 0.0, -1.0],   // belakang
+    [0.0, -1.0, 0.0],   // bawah
+    []
+  ];
   // Fungsi untuk membuat definisi vertices pada satu sisi kubus
   function quad(a, b, c, d) {
     var indices = [a, b, c, c, d, a];
@@ -38,6 +49,11 @@ function main() {
       var color = cubeColors[a];
       for (var j=0; j<color.length; j++) {
         vertices.push(color[j]);
+      }
+      // Mendata normal verteks
+      var normal = cubeNormals[a];
+      for (var j=0; j<color.length; j++) {
+        vertices.push(normal[j]);
       }
     }
   }
@@ -57,22 +73,31 @@ function main() {
   var vertexShaderSource = `
     attribute vec3 a_Position;
     attribute vec3 a_Color;
+    attribute vec3 a_Normal;
     varying vec3 v_Color;
     uniform mat4 u_Projection;
     uniform mat4 u_View;
     uniform mat4 u_Model;
+    uniform mat3 u_Normal;  // Matriks model untuk vektor-vektor normal
+    uniform vec3 u_AmbientColor;
+    uniform vec3 u_LightColor;
+    uniform vec3 u_LightPosition;
     void main() {
       gl_Position = u_Projection * u_View * u_Model * vec4(a_Position, 1.0);
-      v_Color = a_Color;
+      // Mulai penghitungan pencahayaan dan pembayangan
+      vec3 ambient = u_AmbientColor * v_Color;
+      vec3 vertexPosition = (u_Model * vec4(a_Position, 1.0)).xyz;
+      vec3 lightDirection = normalize(u_LightPosition - vertexPosition);
+      float dotProductLN = max(dot(lightDirection, a_Normal), 0);
+      vec3 diffuse = a_Color * u_LightColor * dotProductLN;    // koefisien serap material * intensitas cahaya datang * jumlah cahaya terpantulkan
+      v_Color = ambient + diffuse;
     }
   `;
   var fragmentShaderSource = `
     precision mediump float;
     varying vec3 v_Color;
-    uniform vec3 u_AmbientColor;
     void main() {
-      vec3 ambient = u_AmbientColor * v_Color;
-      gl_FragColor = vec4(ambient, 1.0);
+      gl_FragColor = vec4(vColor, 1.0);
     }
   `;
 
@@ -104,22 +129,31 @@ function main() {
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   var aPosition = gl.getAttribLocation(shaderProgram, "a_Position");
   var aColor = gl.getAttribLocation(shaderProgram, "a_Color");
+  var aNormal = gl.getAttribLocation(shaderProgram, "a_Normal");
   gl.vertexAttribPointer(
     aPosition, 
     3, 
     gl.FLOAT, 
     false, 
-    6 * Float32Array.BYTES_PER_ELEMENT, 
+    9 * Float32Array.BYTES_PER_ELEMENT, 
     0);
   gl.vertexAttribPointer(
     aColor, 
     3, 
     gl.FLOAT, 
     false, 
-    6 * Float32Array.BYTES_PER_ELEMENT, 
+    9 * Float32Array.BYTES_PER_ELEMENT, 
     3 * Float32Array.BYTES_PER_ELEMENT);
+  gl.vertexAttribPointer(
+    aColor, 
+    3, 
+    gl.FLOAT, 
+    false, 
+    9 * Float32Array.BYTES_PER_ELEMENT, 
+    6 * Float32Array.BYTES_PER_ELEMENT);
   gl.enableVertexAttribArray(aPosition);
   gl.enableVertexAttribArray(aColor);
+  gl.enableVertexAttribArray(aNormal);
 
   gl.viewport(100, 0, canvas.height, canvas.height);
   gl.enable(gl.DEPTH_TEST);
@@ -164,11 +198,19 @@ function main() {
 
   var uAmbientColor = gl.getUniformLocation(shaderProgram, 'u_AmbientColor');
   gl.uniform3fv(uAmbientColor, [0.6, 0.6, 0.6]);
+  var uLightColor = gl.getUniformLocation(shaderProgram, 'u_LightColor');
+  gl.uniform3fv(uLightColor, [1.0, 1.0, 1.0]);
+  var uLightPosition = gl.getUniformLocation(shaderProgram, 'u_LightPosition');
+  gl.uniform3fv(uLightPosition, [2.0, 3.0, 2.0]);
+  var uNormal = gl.getUniformLocation(shaderProgram, 'u_Normal');
 
   function render() {
     glMatrix.mat4.rotate(model, model, glMatrix.glMatrix.toRadian(0.5), [0.0, 0.0, 1.0]);
     glMatrix.mat4.rotate(model, model, glMatrix.glMatrix.toRadian(1), [0.0, 1.0, 0.0]);
     gl.uniformMatrix4fv(uModel, false, model);
+    var normal = glMatrix.mat3.create();
+    glMatrix.mat3.normalFromMat4(normal, model);
+    gl.uniformMatrix3fv(uNormal, false, normal);
     gl.clearColor(0.0, 0.22, 0.5, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.drawArrays(primitive, offset, nVertex);
