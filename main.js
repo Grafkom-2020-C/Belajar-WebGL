@@ -74,31 +74,36 @@ function main() {
     attribute vec3 a_Position;
     attribute vec3 a_Color;
     attribute vec3 a_Normal;
+    varying vec3 v_Position;
     varying vec3 v_Color;
+    varying vec3 v_Normal;
     uniform mat4 u_Projection;
     uniform mat4 u_View;
     uniform mat4 u_Model;
-    uniform mat3 u_Normal;  // Matriks model untuk vektor-vektor normal
-    uniform vec3 u_AmbientColor;
-    uniform vec3 u_LightColor;
-    uniform vec3 u_LightPosition;
     void main() {
       gl_Position = u_Projection * u_View * u_Model * vec4(a_Position, 1.0);
-      // Mulai penghitungan pencahayaan dan pembayangan
-      vec3 ambient = u_AmbientColor * v_Color;
-      vec3 vertexPosition = (u_Model * vec4(a_Position, 1.0)).xyz;
-      vec3 lightDirection = normalize(u_LightPosition - vertexPosition);
-      vec3 normalDirection = normalize(u_Normal * a_Normal);
-      float dotProductLN = max(dot(lightDirection, normalDirection), 0.0);
-      vec3 diffuse = a_Color * u_LightColor * dotProductLN;    // koefisien serap material * intensitas cahaya datang * jumlah cahaya terpantulkan
-      v_Color = ambient + diffuse;
+      v_Position = (u_Model * vec4(a_Position, 1.0)).xyz;
+      v_Color = a_Color;
+      v_Normal = a_Normal;
     }
   `;
   var fragmentShaderSource = `
     precision mediump float;
+    varying vec3 v_Position;
     varying vec3 v_Color;
+    varying vec3 v_Normal;
+    uniform vec3 u_AmbientColor;
+    uniform vec3 u_LightColor;
+    uniform vec3 u_LightPosition;
+    uniform mat3 u_Normal;  // Matriks model untuk vektor-vektor normal
     void main() {
-      gl_FragColor = vec4(v_Color, 1.0);
+      // Mulai penghitungan pencahayaan dan pembayangan
+      vec3 ambient = u_AmbientColor * v_Color;
+      vec3 lightDirection = normalize(u_LightPosition - v_Position);
+      vec3 normalDirection = normalize(u_Normal * v_Normal);
+      float dotProductLN = max(dot(lightDirection, normalDirection), 0.0);
+      vec3 diffuse = v_Color * u_LightColor * dotProductLN;    // koefisien serap material * intensitas cahaya datang * jumlah cahaya terpantulkan
+      gl_FragColor = vec4(ambient + diffuse, 1.0);
     }
   `;
 
